@@ -24,6 +24,7 @@ export default defineConfig({
           items: [
             { text: 'Data Model', link: '/guide/data-model' },
             { text: 'Architecture', link: '/guide/architecture' },
+            { text: 'File Watching', link: '/guide/file-watching' },
             { text: 'Markdown Subset', link: '/guide/markdown-subset' },
           ],
         },

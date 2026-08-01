@@ -67,3 +67,29 @@ markbase reindex [<collection>]
 ```
 
 Reindexes all collections, or a specific one if named.
+
+## `markbase status`
+
+Show collection stats and validation errors from the running server.
+
+```bash
+markbase status
+```
+
+Requires the server to be running. Shows record counts and any files
+that failed validation.
+
+## `markbase lint`
+
+Validate files against their schemas offline (no server needed).
+
+```bash
+markbase lint [--config <path>]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--config` | `markbase.config.json` | Path to config file |
+
+Exits with code 1 if any validation errors are found. Useful for
+CI pipelines or pre-commit checks.

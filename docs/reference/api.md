@@ -85,6 +85,44 @@ curl -X POST http://localhost:4824/reindex
 { "status": "ok" }
 ```
 
+### `GET /status`
+
+Get server status: collection stats, record counts, and validation errors.
+
+**Example:**
+```bash
+curl http://localhost:4824/status
+```
+
+**Response:**
+```json
+{
+  "collections": [
+    {
+      "name": "prs",
+      "recordCount": 41,
+      "errorCount": 1,
+      "files": [
+        {
+          "filePath": "/path/to/broken.md",
+          "collectionName": "prs",
+          "valid": false,
+          "errors": [{ "field": "status", "message": "value \"invalid\" not in allowed values: open, closed, merged" }],
+          "lastChecked": 1722500000000
+        }
+      ]
+    }
+  ],
+  "totalRecords": 41,
+  "totalErrors": 1
+}
+```
+
+The `files` array only includes files with validation errors. Valid files
+are omitted to keep the response compact.
+
+---
+
 ## Error Responses
 
 All errors return a JSON object with an `error` field:
