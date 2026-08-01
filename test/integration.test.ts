@@ -117,6 +117,55 @@ describe('end-to-end pipeline', () => {
     expect(record).toBeNull();
   });
 
+  it('filters by section field with dot notation', () => {
+    const result = engine.query('prs', schema, {
+      where: 'triage.importance=high',
+    });
+    expect(result.count).toBe(2);
+    const ids = result.records.map(r => r.id).sort();
+    expect(ids).toEqual(['101', '105']);
+  });
+
+  it('filters by section field combined with frontmatter field', () => {
+    const result = engine.query('prs', schema, {
+      where: 'lifecycle.state=ready-for-review AND author=alice',
+    });
+    expect(result.count).toBe(1);
+    expect(result.records[0].id).toBe('101');
+  });
+
+  it('queries freetext section content', () => {
+    const result = engine.query('prs', schema, { where: 'triage.importance=critical' });
+    expect(result.count).toBe(1);
+    expect(result.records[0].fields['summary']).toContain('null checks');
+  });
+
+  it('selects section fields', () => {
+    const result = engine.query('prs', schema, {
+      select: ['pr', 'triage.importance', 'lifecycle.state'],
+    });
+    for (const rec of result.records) {
+      expect(rec.fields.pr).toBeDefined();
+      expect(rec.fields['triage.importance']).toBeDefined();
+      expect(rec.fields['lifecycle.state']).toBeDefined();
+    }
+  });
+
+  it('sorts by section field', () => {
+    const result = engine.query('prs', schema, { sort: 'triage.importance:asc' });
+    expect(result.count).toBe(5);
+  });
+
+  it('gets a record with section fields by id', () => {
+    const record = engine.getById('prs', schema, '101');
+    expect(record).not.toBeNull();
+    expect(record!.fields['triage.importance']).toBe('high');
+    expect(record!.fields['lifecycle.state']).toBe('ready-for-review');
+    expect(record!.fields['automated review.auto-review']).toBe('reviewed');
+    expect(record!.fields['summary']).toContain('exponential backoff');
+    expect(record!.fields['history']).toContain('PR opened by alice');
+  });
+
   it('reindexes correctly', async () => {
     const config = loadConfig(resolve(FIXTURES, 'markbase.config.json'));
     const col = config.collections[0];

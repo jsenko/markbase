@@ -1,12 +1,20 @@
-import type { MarkdownDocument } from './document.js';
-import type { Schema, MdRecord, RecordFieldValue, FieldDefinition, FileMeta } from './types.js';
+import type { MarkdownDocument, Section } from './document.js';
+import type {
+  Schema,
+  MdRecord,
+  RecordFieldValue,
+  FieldDefinition,
+  FileMeta,
+  SectionDefinition,
+} from './types.js';
 
 /**
  * Map a MarkdownDocument to a typed MdRecord using a collection schema.
  *
- * Extracts frontmatter values declared in the schema, coerces them to
- * the declared types, and assigns the record ID from the key field
- * (falls back to file path if no key field has a value).
+ * Extracts frontmatter values and section fields declared in the schema,
+ * coerces them to the declared types. Section fields use dot notation
+ * (e.g. "triage.importance"). Freetext sections become a single text field
+ * named after the section (lowercased).
  */
 export function mapDocumentToRecord(
   document: MarkdownDocument,
@@ -27,6 +35,10 @@ export function mapDocumentToRecord(
     }
   }
 
+  if (schema.sections) {
+    mapSectionFields(document.sections, schema.sections, fields);
+  }
+
   if (id === undefined) {
     id = meta.filePath;
   }
@@ -34,8 +46,43 @@ export function mapDocumentToRecord(
   return { id, collectionName, fields, meta };
 }
 
+/** Extract section fields from parsed sections into the flat fields map. */
+function mapSectionFields(
+  sections: Section[],
+  sectionDefs: Record<string, SectionDefinition>,
+  fields: Record<string, RecordFieldValue>,
+): void {
+  for (const [sectionName, sectionDef] of Object.entries(sectionDefs)) {
+    const section = sections.find(
+      s => s.heading.toLowerCase() === sectionName.toLowerCase(),
+    );
+
+    if (isFreetext(sectionDef)) {
+      const key = sectionName.toLowerCase();
+      fields[key] = section?.content || null;
+    } else {
+      const prefix = sectionName.toLowerCase();
+      for (const [fieldName, fieldDef] of Object.entries(sectionDef)) {
+        if (!fieldDef) continue;
+        const qualifiedName = `${prefix}.${fieldName}`;
+        const sectionField = section?.fields.find(f => f.key === fieldName);
+        const coerced = coerceValue(
+          sectionField?.value ?? null,
+          fieldDef,
+          qualifiedName,
+        );
+        fields[qualifiedName] = coerced;
+      }
+    }
+  }
+}
+
+function isFreetext(def: SectionDefinition): def is { _type: 'freetext' } {
+  return '_type' in def && def._type === 'freetext';
+}
+
 /**
- * Coerce a raw frontmatter value to the type declared in the schema.
+ * Coerce a raw value to the type declared in the schema.
  * gray-matter parses YAML dates as Date objects, so we normalize those to ISO strings.
  */
 function coerceValue(
@@ -47,7 +94,6 @@ function coerceValue(
     return null;
   }
 
-  // gray-matter parses YAML dates (e.g. 2025-03-15) as JS Date objects
   if (raw instanceof Date) {
     return raw.toISOString().slice(0, 10);
   }

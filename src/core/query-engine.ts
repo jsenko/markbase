@@ -1,9 +1,10 @@
 import type Database from 'better-sqlite3';
 import type { Schema, MdRecord, RecordFields } from './types.js';
+import { resolveFieldDef, getSchemaFieldNames } from './schema-utils.js';
 
 /** Options for querying a collection. */
 export interface QueryOptions {
-  /** Filter expression, e.g. "author=alice AND draft=false". */
+  /** Filter expression, e.g. "author=alice AND triage.importance=high". */
   where?: string;
   /** Field names to include in the result (all fields if omitted). */
   select?: string[];
@@ -59,8 +60,9 @@ function buildSelectClause(select?: string[]): string {
 }
 
 /**
- * Parse a where expression like "author=alice AND draft=false" into
- * parameterized SQL conditions. Validates field names against the schema.
+ * Parse a where expression like "author=alice AND triage.importance=high"
+ * into parameterized SQL. Validates field names against the full schema
+ * (frontmatter + section fields).
  */
 function buildWhereClause(
   where: string | undefined,
@@ -73,13 +75,13 @@ function buildWhereClause(
 
   const parts = where.split(/\s+AND\s+/i);
   for (const part of parts) {
-    const match = part.match(/^(\w+)\s*(!=|=)\s*(.+)$/);
+    const match = part.match(/^([\w.]+)\s*(!=|=)\s*(.+)$/);
     if (!match) {
       throw new Error(`Invalid filter expression: "${part}"`);
     }
 
     const [, field, op, value] = match;
-    const fieldDef = schema.frontmatter[field];
+    const fieldDef = resolveFieldDef(schema, field);
     if (!fieldDef) {
       throw new Error(`Unknown field "${field}" in collection "${schema.name}"`);
     }
@@ -123,10 +125,11 @@ function rowToRecord(
 ): MdRecord {
   const fields: RecordFields = {};
 
-  for (const fieldName of Object.keys(schema.frontmatter)) {
+  for (const fieldName of getSchemaFieldNames(schema)) {
     if (fieldName in row) {
       const val = row[fieldName];
-      if (schema.frontmatter[fieldName].type === 'boolean') {
+      const def = resolveFieldDef(schema, fieldName);
+      if (def?.type === 'boolean') {
         fields[fieldName] = val === 1 ? true : val === 0 ? false : val as boolean;
       } else {
         fields[fieldName] = val as string | number | boolean | null;

@@ -48,4 +48,39 @@ describe('mapDocumentToRecord', () => {
     expect(record.meta.filePath).toContain('102.md');
     expect(record.meta.mtime).toBeGreaterThan(0);
   });
+
+  it('maps structured section fields with dot notation', () => {
+    const { document, meta } = parseMarkdownFile(resolve(FIXTURES, 'prs/101.md'));
+    const record = mapDocumentToRecord(document, schema, 'prs', meta);
+
+    expect(record.fields['triage.importance']).toBe('high');
+    expect(record.fields['triage.reason']).toContain('Core reliability');
+    expect(record.fields['lifecycle.state']).toBe('ready-for-review');
+    expect(record.fields['automated review.auto-review']).toBe('reviewed');
+    expect(record.fields['automated review.complexity']).toBe('moderate');
+  });
+
+  it('maps freetext sections as single text field', () => {
+    const { document, meta } = parseMarkdownFile(resolve(FIXTURES, 'prs/101.md'));
+    const record = mapDocumentToRecord(document, schema, 'prs', meta);
+
+    expect(record.fields['summary']).toContain('exponential backoff');
+    expect(record.fields['history']).toContain('PR opened by alice');
+  });
+
+  it('sets freetext to null for empty sections', () => {
+    const { document, meta } = parseMarkdownFile(resolve(FIXTURES, 'prs/102.md'));
+    const record = mapDocumentToRecord(document, schema, 'prs', meta);
+
+    expect(record.fields['attention']).toBe(null);
+  });
+
+  it('sets section fields to null when section is missing', () => {
+    const { document, meta } = parseMarkdownFile(resolve(FIXTURES, 'prs/101.md'));
+    document.sections = [];
+    const record = mapDocumentToRecord(document, schema, 'prs', meta);
+
+    expect(record.fields['triage.importance']).toBeNull();
+    expect(record.fields['summary']).toBeNull();
+  });
 });

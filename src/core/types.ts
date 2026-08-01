@@ -20,12 +20,29 @@ export interface SourceDefinition {
   path: string;
 }
 
+/**
+ * A section definition in the schema. Either structured (has field definitions)
+ * or freetext (content stored as a single text blob).
+ */
+export type SectionDefinition = StructuredSectionDefinition | FreetextSectionDefinition;
+
+export interface StructuredSectionDefinition {
+  _type?: undefined;
+  [fieldName: string]: FieldDefinition | undefined;
+}
+
+export interface FreetextSectionDefinition {
+  _type: 'freetext';
+}
+
 /** Defines a collection's structure: name, source mapping, and field definitions. */
 export interface Schema {
   name: string;
   source: SourceDefinition;
   /** Field definitions extracted from YAML frontmatter. */
   frontmatter: Record<string, FieldDefinition>;
+  /** Section definitions keyed by heading name. */
+  sections?: Record<string, SectionDefinition>;
 }
 
 /** A collection registration in the config file. */

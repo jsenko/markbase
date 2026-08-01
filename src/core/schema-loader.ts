@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import type { Schema, FieldDefinition, FieldType, Config, CollectionConfig } from './types.js';
+import type { Schema, FieldDefinition, FieldType, Config, CollectionConfig, SectionDefinition } from './types.js';
 
 const VALID_FIELD_TYPES: FieldType[] = ['string', 'integer', 'boolean', 'enum', 'date'];
 const VALID_SOURCE_TYPES = ['directory'] as const;
@@ -44,7 +44,9 @@ function parseSchema(raw: Record<string, unknown>, filePath: string): Schema {
   const source = parseSource(raw.source, filePath);
   const frontmatter = parseFrontmatterDefs(raw.frontmatter, filePath);
 
-  return { name: raw.name, source, frontmatter };
+  const sections = raw.sections ? parseSectionDefs(raw.sections, filePath) : undefined;
+
+  return { name: raw.name, source, frontmatter, sections };
 }
 
 function parseSource(
@@ -110,6 +112,57 @@ function parseFrontmatterDefs(
     }
 
     defs[key] = def;
+  }
+
+  return defs;
+}
+
+/** Parse the "sections" block of a schema into SectionDefinitions. */
+function parseSectionDefs(
+  raw: unknown,
+  filePath: string,
+): Record<string, SectionDefinition> {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error(`Schema at ${filePath}: "sections" must be an object`);
+  }
+
+  const defs: Record<string, SectionDefinition> = {};
+
+  for (const [sectionName, sectionVal] of Object.entries(raw as Record<string, unknown>)) {
+    if (!sectionVal || typeof sectionVal !== 'object') {
+      throw new Error(`Schema at ${filePath}: sections.${sectionName} must be an object`);
+    }
+    const section = sectionVal as Record<string, unknown>;
+
+    if (section._type === 'freetext') {
+      defs[sectionName] = { _type: 'freetext' };
+      continue;
+    }
+
+    const fieldDefs: Record<string, FieldDefinition> = {};
+    for (const [fieldName, fieldVal] of Object.entries(section)) {
+      if (!fieldVal || typeof fieldVal !== 'object') {
+        throw new Error(
+          `Schema at ${filePath}: sections.${sectionName}.${fieldName} must be an object`,
+        );
+      }
+      const field = fieldVal as Record<string, unknown>;
+      const type = field.type as string;
+      if (!VALID_FIELD_TYPES.includes(type as FieldType)) {
+        throw new Error(
+          `Schema at ${filePath}: sections.${sectionName}.${fieldName}.type must be one of: ${VALID_FIELD_TYPES.join(', ')}`,
+        );
+      }
+      const def: FieldDefinition = { type: type as FieldType };
+      if (typeof field.format === 'string') {
+        def.format = field.format;
+      }
+      if (type === 'enum' && Array.isArray(field.values)) {
+        def.values = field.values as string[];
+      }
+      fieldDefs[fieldName] = def;
+    }
+    defs[sectionName] = fieldDefs;
   }
 
   return defs;
