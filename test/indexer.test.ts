@@ -67,4 +67,53 @@ describe('Indexer', () => {
     const count = db.prepare('SELECT COUNT(*) as cnt FROM "prs"').get() as { cnt: number };
     expect(count.cnt).toBe(2);
   });
+
+  it('upserts a single record', () => {
+    const record = { ...records[0], fields: { ...records[0].fields, author: 'updated' } };
+    indexer.upsertRecord(schema, record);
+
+    const db = indexer.getDatabase();
+    const row = db.prepare('SELECT * FROM "prs" WHERE _id = ?').get('101') as Record<string, unknown>;
+    expect(row.author).toBe('updated');
+
+    const count = db.prepare('SELECT COUNT(*) as cnt FROM "prs"').get() as { cnt: number };
+    expect(count.cnt).toBe(5);
+  });
+
+  it('deletes records by file path', () => {
+    const filePath = records[0].meta.filePath;
+    indexer.deleteByFilePath('prs', filePath);
+
+    const db = indexer.getDatabase();
+    const count = db.prepare('SELECT COUNT(*) as cnt FROM "prs"').get() as { cnt: number };
+    expect(count.cnt).toBe(4);
+  });
+
+  it('gets stored mtime for a file', () => {
+    const filePath = records[0].meta.filePath;
+    const mtime = indexer.getFileMtime('prs', filePath);
+    expect(mtime).toBe(records[0].meta.mtime);
+  });
+
+  it('returns null mtime for unknown file', () => {
+    const mtime = indexer.getFileMtime('prs', '/nonexistent.md');
+    expect(mtime).toBeNull();
+  });
+
+  it('ensureTable creates table if missing', () => {
+    const db = indexer.getDatabase();
+    db.exec('DROP TABLE IF EXISTS "prs"');
+    indexer.ensureTable(schema);
+
+    const count = db.prepare('SELECT COUNT(*) as cnt FROM "prs"').get() as { cnt: number };
+    expect(count.cnt).toBe(0);
+  });
+
+  it('ensureTable does not drop existing data', () => {
+    indexer.ensureTable(schema);
+
+    const db = indexer.getDatabase();
+    const count = db.prepare('SELECT COUNT(*) as cnt FROM "prs"').get() as { cnt: number };
+    expect(count.cnt).toBe(5);
+  });
 });

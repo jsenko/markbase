@@ -75,6 +75,34 @@ export class Indexer {
     insertMany(records);
   }
 
+  /** Upsert a single record (insert or replace). */
+  upsertRecord(schema: Schema, record: MdRecord): void {
+    this.insertRecords(schema, [record]);
+  }
+
+  /** Remove all records originating from a specific file path. */
+  deleteByFilePath(collectionName: string, filePath: string): void {
+    this.db.prepare(`DELETE FROM "${collectionName}" WHERE _file_path = ?`).run(filePath);
+  }
+
+  /** Get the stored mtime for a file, or null if not indexed. */
+  getFileMtime(collectionName: string, filePath: string): number | null {
+    const row = this.db.prepare(
+      `SELECT _mtime FROM "${collectionName}" WHERE _file_path = ?`,
+    ).get(filePath) as { _mtime: number } | undefined;
+    return row?._mtime ?? null;
+  }
+
+  /** Ensure the table exists (create if missing, no drop). */
+  ensureTable(schema: Schema): void {
+    const exists = this.db.prepare(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+    ).get(schema.name);
+    if (!exists) {
+      this.createTable(schema);
+    }
+  }
+
   /** Drop and rebuild the entire table for a collection. */
   reindex(schema: Schema, records: MdRecord[]): void {
     this.createTable(schema);
