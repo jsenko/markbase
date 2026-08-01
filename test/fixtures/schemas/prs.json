@@ -1,0 +1,16 @@
+{
+  "name": "prs",
+  "source": {
+    "type": "directory",
+    "path": "./prs/**/*.md"
+  },
+  "frontmatter": {
+    "pr": { "type": "integer", "key": true },
+    "repo": { "type": "string" },
+    "title": { "type": "string" },
+    "author": { "type": "string" },
+    "assignee": { "type": "string" },
+    "draft": { "type": "boolean" },
+    "created": { "type": "string", "format": "date" }
+  }
+}

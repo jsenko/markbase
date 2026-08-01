@@ -1,0 +1,9 @@
+{
+  "collections": [
+    {
+      "name": "prs",
+      "path": "./prs/**/*.md",
+      "schema": "./schemas/prs.json"
+    }
+  ]
+}
