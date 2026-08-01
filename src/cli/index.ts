@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { startServer } from '../server/index.js';
+import { startMcpServer } from '../mcp/index.js';
 import { MarkbaseClient, MarkbaseError } from '../sdk/index.js';
 
 const DEFAULT_PORT = 4824;
@@ -23,6 +24,18 @@ program
   .option('-c, --config <path>', 'Path to config file', DEFAULT_CONFIG)
   .action(async (options) => {
     await startServer({
+      configPath: options.config,
+      port: parseInt(options.port, 10),
+    });
+  });
+
+program
+  .command('mcp')
+  .description('Start the MCP server (auto-starts markbase server if needed)')
+  .option('-p, --port <port>', 'markbase server port', String(DEFAULT_PORT))
+  .option('-c, --config <path>', 'Path to config file', DEFAULT_CONFIG)
+  .action(async (options) => {
+    await startMcpServer({
       configPath: options.config,
       port: parseInt(options.port, 10),
     });
