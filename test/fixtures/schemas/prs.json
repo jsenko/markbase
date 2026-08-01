@@ -12,5 +12,23 @@
     "assignee": { "type": "string" },
     "draft": { "type": "boolean" },
     "created": { "type": "string", "format": "date" }
+  },
+  "sections": {
+    "Triage": {
+      "importance": { "type": "string" },
+      "reason": { "type": "string" }
+    },
+    "Lifecycle": {
+      "state": { "type": "string" },
+      "flags": { "type": "string" }
+    },
+    "Automated Review": {
+      "auto-review": { "type": "string" },
+      "findings": { "type": "string" },
+      "complexity": { "type": "string" }
+    },
+    "Summary": { "_type": "freetext" },
+    "Attention": { "_type": "freetext" },
+    "History": { "_type": "freetext" }
   }
 }
