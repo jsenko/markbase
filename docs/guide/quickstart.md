@@ -4,14 +4,13 @@
 markbase is in early development. APIs and configuration formats may change.
 :::
 
-## Installation
+## Prerequisites
+
+Install markbase following the [Installation](./installation) guide.
+Verify it works:
 
 ```bash
-# Clone and build from source
-git clone https://github.com/jsenko/markbase.git
-cd markbase
-npm install
-npm run build
+markbase --version
 ```
 
 ## Your first collection

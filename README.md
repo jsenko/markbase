@@ -17,10 +17,28 @@ markbase adds database semantics to markdown files:
 Your files stay as plain markdown. The index is derived, disposable,
 rebuildable. Any editor can modify the files — the index catches up.
 
+## Quick start
+
+```bash
+# Install
+git clone https://github.com/jsenko/markbase.git
+cd markbase
+npm install
+npm run build
+npm link        # makes 'markbase' command available
+
+# Start server (in a directory with markbase.config.json)
+markbase serve
+
+# Query (in another terminal)
+markbase query prs --where "author=alice" --select "pr,title"
+markbase get prs/101
+```
+
 ## Documentation
 
 See the [full documentation](https://jsenko.github.io/markbase/) for
-guides, reference, and examples.
+installation, guides, API reference, and examples.
 
 To run docs locally:
 

@@ -14,6 +14,7 @@ export default defineConfig({
           text: 'Getting Started',
           items: [
             { text: 'What is markbase?', link: '/guide/' },
+            { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start', link: '/guide/quickstart' },
           ],
         },
