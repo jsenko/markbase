@@ -12,6 +12,27 @@ export interface QueryResult {
   count: number;
 }
 
+export interface ServerStatus {
+  collections: CollectionStatus[];
+  totalRecords: number;
+  totalErrors: number;
+}
+
+export interface CollectionStatus {
+  name: string;
+  recordCount: number;
+  errorCount: number;
+  files: FileStatusEntry[];
+}
+
+export interface FileStatusEntry {
+  filePath: string;
+  collectionName: string;
+  valid: boolean;
+  errors: Array<{ field: string; message: string }>;
+  lastChecked: number;
+}
+
 export interface MarkbaseClientOptions {
   /** Server base URL. Defaults to http://localhost:4824. */
   baseUrl?: string;
@@ -44,6 +65,12 @@ export class MarkbaseClient {
   /** Get a single record by collection and ID. */
   async get(collection: string, id: string): Promise<MdRecord> {
     const url = `${this.baseUrl}/collections/${collection}/records/${id}`;
+    return this.fetchJson(url);
+  }
+
+  /** Get server and validation status for all collections. */
+  async status(): Promise<ServerStatus> {
+    const url = `${this.baseUrl}/status`;
     return this.fetchJson(url);
   }
 
