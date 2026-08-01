@@ -16,6 +16,7 @@ export default defineConfig({
             { text: 'What is markbase?', link: '/guide/' },
             { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start', link: '/guide/quickstart' },
+            { text: 'MCP Server', link: '/guide/mcp-server' },
           ],
         },
         {

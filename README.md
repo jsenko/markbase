@@ -35,6 +35,24 @@ markbase query prs --where "author=alice" --select "pr,title"
 markbase get prs/101
 ```
 
+## MCP server (AI agents)
+
+Add markbase to your Claude Code MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "markbase": {
+      "command": "markbase",
+      "args": ["mcp", "--config", "/path/to/markbase.config.json"]
+    }
+  }
+}
+```
+
+The MCP server auto-starts the markbase server and exposes `markbase_query`,
+`markbase_get`, and `markbase_reindex` tools.
+
 ## Documentation
 
 See the [full documentation](https://jsenko.github.io/markbase/) for

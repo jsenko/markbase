@@ -78,4 +78,19 @@ markbase serve
     └── HTTP API         ← exposes endpoints for CLI and other clients
 ```
 
-The CLI is a thin HTTP client that sends requests to the server.
+## Client Architecture
+
+The markbase server is the single process that owns the index. All
+clients communicate with it via the REST API, using the shared SDK
+(a typed HTTP client).
+
+```
+markbase server (single index owner)
+    ↑ REST API
+    ├── CLI        (markbase query, get, reindex)
+    ├── MCP server (markbase mcp — for AI agents)
+    └── SDK        (MarkbaseClient — for custom integrations)
+```
+
+The MCP server auto-starts the markbase server if it's not running,
+so a single `markbase mcp` command is sufficient for AI agent setups.

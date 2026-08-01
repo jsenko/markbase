@@ -13,6 +13,24 @@ markbase serve [--port <port>]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--port` | `4824` | Port to listen on |
+| `--config` | `markbase.config.json` | Path to config file |
+
+## `markbase mcp`
+
+Start the MCP server for AI agent integration. Communicates with the
+markbase server via REST API. Auto-starts the markbase server if not
+already running.
+
+```bash
+markbase mcp [--port <port>] [--config <path>]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--port` | `4824` | markbase server port to connect to |
+| `--config` | `markbase.config.json` | Config file (used if auto-starting server) |
+
+The MCP server uses stdio transport (JSON-RPC over stdin/stdout).
 
 ## `markbase query`
 

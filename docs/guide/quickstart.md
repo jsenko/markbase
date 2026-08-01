@@ -89,3 +89,22 @@ markbase query prs --where "author=alice"
 markbase query prs --select "pr,title,author" --sort "created:desc"
 markbase get prs/101
 ```
+
+### 5. Use with AI agents (MCP)
+
+To make your collections available to AI agents like Claude, add
+markbase as an MCP server. For Claude Code, add to your settings:
+
+```json
+{
+  "mcpServers": {
+    "markbase": {
+      "command": "markbase",
+      "args": ["mcp", "--config", "/absolute/path/to/markbase.config.json"]
+    }
+  }
+}
+```
+
+The `markbase mcp` command auto-starts the markbase server if needed.
+See the [MCP Server](./mcp-server) guide for details.
