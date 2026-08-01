@@ -2,9 +2,12 @@
 
 import { Command } from 'commander';
 import { startServer } from '../server/index.js';
+import { MarkbaseClient, MarkbaseError } from '../sdk/index.js';
 
 const DEFAULT_PORT = 4824;
 const DEFAULT_CONFIG = 'markbase.config.json';
+
+const client = new MarkbaseClient({ baseUrl: `http://localhost:${DEFAULT_PORT}` });
 
 const program = new Command();
 
@@ -32,22 +35,16 @@ program
   .option('-s, --select <fields>', 'Comma-separated fields to return')
   .option('--sort <field:order>', 'Sort by field (e.g. created:desc)')
   .action(async (collection, options) => {
-    const params = new URLSearchParams();
-    if (options.where) params.set('where', options.where);
-    if (options.select) params.set('select', options.select);
-    if (options.sort) params.set('sort', options.sort);
-
-    const url = `http://localhost:${DEFAULT_PORT}/collections/${collection}/query?${params}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const body = await response.json();
-      console.error(`Error: ${body.error}`);
-      process.exit(1);
+    try {
+      const result = await client.query(collection, {
+        where: options.where,
+        select: options.select?.split(','),
+        sort: options.sort,
+      });
+      console.log(JSON.stringify(result, null, 2));
+    } catch (err) {
+      handleError(err);
     }
-
-    const result = await response.json();
-    console.log(JSON.stringify(result, null, 2));
   });
 
 program
@@ -60,33 +57,33 @@ program
       process.exit(1);
     }
 
-    const url = `http://localhost:${DEFAULT_PORT}/collections/${collection}/records/${id}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const body = await response.json();
-      console.error(`Error: ${body.error}`);
-      process.exit(1);
+    try {
+      const result = await client.get(collection, id);
+      console.log(JSON.stringify(result, null, 2));
+    } catch (err) {
+      handleError(err);
     }
-
-    const result = await response.json();
-    console.log(JSON.stringify(result, null, 2));
   });
 
 program
   .command('reindex')
   .description('Rebuild the index from files')
   .action(async () => {
-    const url = `http://localhost:${DEFAULT_PORT}/reindex`;
-    const response = await fetch(url, { method: 'POST' });
-
-    if (!response.ok) {
-      const body = await response.json();
-      console.error(`Error: ${body.error}`);
-      process.exit(1);
+    try {
+      await client.reindex();
+      console.log('Reindex complete.');
+    } catch (err) {
+      handleError(err);
     }
-
-    console.log('Reindex complete.');
   });
+
+function handleError(err: unknown): void {
+  if (err instanceof MarkbaseError) {
+    console.error(`Error: ${err.message}`);
+  } else {
+    console.error(`Error: ${err}`);
+  }
+  process.exit(1);
+}
 
 program.parse();
