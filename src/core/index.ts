@@ -26,6 +26,8 @@ export { parseMarkdownFile, parseMarkdownString } from './parser.js';
 export type { ParsedFile } from './parser.js';
 export { mapDocumentToRecord } from './schema-mapper.js';
 export { getSchemaFieldNames, resolveFieldDef, isKnownField } from './schema-utils.js';
+export { validateDocument } from './validator.js';
+export type { ValidationError, ValidationResult } from './validator.js';
 export { Indexer } from './indexer.js';
 export { QueryEngine } from './query-engine.js';
 export type { QueryOptions, QueryResult } from './query-engine.js';
