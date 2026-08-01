@@ -1,9 +1,13 @@
 import type Database from 'better-sqlite3';
 import type { Schema, MdRecord, RecordFields } from './types.js';
 
+/** Options for querying a collection. */
 export interface QueryOptions {
+  /** Filter expression, e.g. "author=alice AND draft=false". */
   where?: string;
+  /** Field names to include in the result (all fields if omitted). */
   select?: string[];
+  /** Sort expression, e.g. "created:desc". */
   sort?: string;
 }
 
@@ -12,6 +16,10 @@ export interface QueryResult {
   count: number;
 }
 
+/**
+ * Translates query options into SQL and executes against the SQLite index.
+ * Returns MdRecord objects, not raw SQL rows.
+ */
 export class QueryEngine {
   private db: Database.Database;
 
@@ -19,6 +27,7 @@ export class QueryEngine {
     this.db = db;
   }
 
+  /** Query a collection with optional filtering, projection, and sorting. */
   query(collectionName: string, schema: Schema, options: QueryOptions = {}): QueryResult {
     const selectClause = buildSelectClause(options.select);
     const { whereClause, params } = buildWhereClause(options.where, schema);
@@ -31,6 +40,7 @@ export class QueryEngine {
     return { records, count: records.length };
   }
 
+  /** Fetch a single record by its ID. Returns null if not found. */
   getById(collectionName: string, schema: Schema, id: string): MdRecord | null {
     const row = this.db.prepare(`SELECT * FROM "${collectionName}" WHERE _id = ?`).get(id) as
       | Record<string, unknown>
@@ -41,12 +51,17 @@ export class QueryEngine {
   }
 }
 
+/** Build the SELECT clause; always includes internal columns (_id, _file_path, _mtime). */
 function buildSelectClause(select?: string[]): string {
   if (!select || select.length === 0) return '*';
   const columns = ['_id', '_file_path', '_mtime', ...select];
   return [...new Set(columns)].map(c => `"${c}"`).join(', ');
 }
 
+/**
+ * Parse a where expression like "author=alice AND draft=false" into
+ * parameterized SQL conditions. Validates field names against the schema.
+ */
 function buildWhereClause(
   where: string | undefined,
   schema: Schema,
@@ -88,6 +103,7 @@ function buildOrderClause(sort?: string): string {
   return `ORDER BY "${field}" ${direction}`;
 }
 
+/** Coerce a string filter value to the appropriate SQL bind type. */
 function coerceFilterValue(value: string, type: string): string | number {
   switch (type) {
     case 'integer':
@@ -99,6 +115,7 @@ function coerceFilterValue(value: string, type: string): string | number {
   }
 }
 
+/** Convert a SQLite row back to an MdRecord, restoring boolean values from integers. */
 function rowToRecord(
   row: Record<string, unknown>,
   collectionName: string,

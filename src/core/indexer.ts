@@ -1,14 +1,22 @@
 import Database from 'better-sqlite3';
 import type { Schema, MdRecord, FieldDefinition } from './types.js';
 
+/**
+ * Manages the SQLite index that backs collection queries.
+ *
+ * Creates typed tables from schema definitions and persists MdRecords.
+ * The index is derived from markdown files and is fully rebuildable.
+ */
 export class Indexer {
   private db: Database.Database;
 
+  /** @param dbPath SQLite file path, or ":memory:" for in-memory index (default). */
   constructor(dbPath: string = ':memory:') {
     this.db = new Database(dbPath);
     this.db.pragma('journal_mode = WAL');
   }
 
+  /** Create (or recreate) the table for a collection based on its schema. */
   createTable(schema: Schema): void {
     const columns = [
       '_id TEXT PRIMARY KEY',
@@ -24,6 +32,7 @@ export class Indexer {
     this.db.exec(`CREATE TABLE "${schema.name}" (${columns.join(', ')})`);
   }
 
+  /** Insert or replace records into a collection table within a transaction. */
   insertRecords(collectionName: string, records: MdRecord[]): void {
     if (records.length === 0) return;
 
@@ -52,6 +61,7 @@ export class Indexer {
     insertMany(records);
   }
 
+  /** Drop and rebuild the entire table for a collection. */
   reindex(schema: Schema, records: MdRecord[]): void {
     this.createTable(schema);
     this.insertRecords(schema.name, records);
@@ -66,6 +76,7 @@ export class Indexer {
   }
 }
 
+/** Convert JS values to SQLite-compatible types (booleans become 0/1). */
 function toSqliteValue(value: unknown): string | number | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'boolean') return value ? 1 : 0;
@@ -73,6 +84,7 @@ function toSqliteValue(value: unknown): string | number | null {
   return String(value);
 }
 
+/** Map a schema field type to its SQLite column type. */
 function sqliteType(def: FieldDefinition): string {
   switch (def.type) {
     case 'integer':

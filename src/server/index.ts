@@ -16,6 +16,12 @@ export interface ServerOptions {
   port: number;
 }
 
+/**
+ * Start the markbase HTTP server.
+ *
+ * Loads the config, parses all registered collections into a SQLite index,
+ * and exposes REST endpoints for querying, fetching, and reindexing.
+ */
 export async function startServer(options: ServerOptions): Promise<void> {
   const { configPath, port } = options;
   const configDir = dirname(resolve(configPath));
@@ -37,6 +43,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
   const engine = new QueryEngine(indexer.getDatabase());
   const app = express();
 
+  /** Query a collection with optional where/select/sort parameters. */
   app.get('/collections/:name/query', (req, res) => {
     const { name } = req.params;
     const schema = schemas.get(name);
@@ -59,6 +66,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
     }
   });
 
+  /** Fetch a single record by collection name and record ID. */
   app.get('/collections/:name/records/:id', (req, res) => {
     const { name, id } = req.params;
     const schema = schemas.get(name);
@@ -75,6 +83,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
     res.json(record);
   });
 
+  /** Rebuild the index for all collections from their source files. */
   app.post('/reindex', async (req, res) => {
     try {
       for (const col of config.collections) {
@@ -94,6 +103,7 @@ export async function startServer(options: ServerOptions): Promise<void> {
   });
 }
 
+/** Scan all markdown files matching a collection's path pattern and produce records. */
 async function scanCollection(
   baseDir: string,
   pathPattern: string,

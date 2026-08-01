@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
 import type { Schema, FieldDefinition, FieldType, Config, CollectionConfig } from './types.js';
 
 const VALID_FIELD_TYPES: FieldType[] = ['string', 'integer', 'boolean', 'enum', 'date'];
 const VALID_SOURCE_TYPES = ['directory'] as const;
 
+/** Load and validate a markbase.config.json file. */
 export function loadConfig(configPath: string): Config {
   const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
 
@@ -30,6 +30,7 @@ export function loadConfig(configPath: string): Config {
   return { collections };
 }
 
+/** Load and validate a collection schema JSON file. */
 export function loadSchema(schemaPath: string): Schema {
   const raw = JSON.parse(readFileSync(schemaPath, 'utf-8'));
   return parseSchema(raw, schemaPath);
@@ -67,6 +68,7 @@ function parseSource(
   return { type: src.type as 'directory', path: src.path };
 }
 
+/** Parse the "frontmatter" block of a schema into typed FieldDefinitions. */
 function parseFrontmatterDefs(
   raw: unknown,
   filePath: string,

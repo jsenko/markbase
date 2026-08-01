@@ -1,6 +1,13 @@
 import type { MarkdownDocument } from './document.js';
 import type { Schema, MdRecord, RecordFieldValue, FieldDefinition, FileMeta } from './types.js';
 
+/**
+ * Map a MarkdownDocument to a typed MdRecord using a collection schema.
+ *
+ * Extracts frontmatter values declared in the schema, coerces them to
+ * the declared types, and assigns the record ID from the key field
+ * (falls back to file path if no key field has a value).
+ */
 export function mapDocumentToRecord(
   document: MarkdownDocument,
   schema: Schema,
@@ -27,6 +34,10 @@ export function mapDocumentToRecord(
   return { id, collectionName, fields, meta };
 }
 
+/**
+ * Coerce a raw frontmatter value to the type declared in the schema.
+ * gray-matter parses YAML dates as Date objects, so we normalize those to ISO strings.
+ */
 function coerceValue(
   raw: unknown,
   fieldDef: FieldDefinition,
@@ -36,6 +47,7 @@ function coerceValue(
     return null;
   }
 
+  // gray-matter parses YAML dates (e.g. 2025-03-15) as JS Date objects
   if (raw instanceof Date) {
     return raw.toISOString().slice(0, 10);
   }
