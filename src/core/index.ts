@@ -17,3 +17,8 @@ export type {
   Section,
   SectionField,
 } from './document.js';
+
+export { loadConfig, loadSchema } from './schema-loader.js';
+export { parseMarkdownFile, parseMarkdownString } from './parser.js';
+export type { ParsedFile } from './parser.js';
+export { mapDocumentToRecord } from './schema-mapper.js';
