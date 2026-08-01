@@ -1,0 +1,52 @@
+{
+  "name": "markbase",
+  "version": "0.1.0",
+  "description": "A markdown database — schema, index, query, and update markdown files",
+  "type": "module",
+  "bin": {
+    "markbase": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node dist/cli/index.js",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsenko/markbase.git"
+  },
+  "keywords": [
+    "markdown",
+    "database",
+    "sqlite",
+    "schema",
+    "query",
+    "mcp"
+  ],
+  "author": "Jakub Senko",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jsenko/markbase/issues"
+  },
+  "homepage": "https://github.com/jsenko/markbase#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.2",
+    "commander": "^15.0.0",
+    "express": "^5.2.1",
+    "glob": "^13.0.6",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.2",
+    "typescript": "^7.0.2",
+    "vitepress": "^1.6.4",
+    "vitest": "^4.1.10"
+  }
+}
