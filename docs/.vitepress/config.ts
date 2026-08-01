@@ -20,6 +20,7 @@ export default defineConfig({
         {
           text: 'Concepts',
           items: [
+            { text: 'Architecture', link: '/guide/architecture' },
             { text: 'Markdown Subset', link: '/guide/markdown-subset' },
           ],
         },
