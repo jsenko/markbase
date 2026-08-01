@@ -14,12 +14,12 @@ with each release.
 | Markdown feature | CommonMark/GFM spec | markbase support | Used for |
 |-----------------|---------------------|------------------|----------|
 | YAML frontmatter | `---` delimiters | **Phase 1** | Record fields |
-| Headings (`#`, `##`, ...) | CommonMark §4.2 | Planned (Phase 2) | Section boundaries |
-| Bold key-value (`- **key:** value`) | CommonMark §6.4 + §5.3 | Planned (Phase 2) | Section fields |
-| Horizontal rules (`---`) | CommonMark §4.1 | Planned (Phase 2) | Record delimiters |
-| Bullet lists (`- item`) | CommonMark §5.3 | Planned (Phase 2) | Array fields |
+| Headings (`#`, `##`, ...) | CommonMark §4.2 | **Phase 2** | Section boundaries |
+| Bold key-value (`- **key:** value`) | CommonMark §6.4 + §5.3 | **Phase 2** | Section fields |
+| Paragraphs / freetext | CommonMark §4.8 | **Phase 2** | Freetext section content |
+| Horizontal rules (`---`) | CommonMark §4.1 | Planned (future) | Record delimiters |
+| Bullet lists (`- item`) | CommonMark §5.3 | Planned (future) | Array fields |
 | GFM tables | GFM §4.10 | Planned (future) | Embedded structured data |
-| Paragraphs | CommonMark §4.8 | Planned (future) | Free-text content |
 | Inline formatting (bold, italic, code) | CommonMark §6 | Not extracted | Preserved in content |
 | Links | CommonMark §6.5 | Not extracted | Preserved in content |
 | Images | CommonMark §6.6 | Not extracted | Preserved in content |
@@ -75,3 +75,58 @@ This content is preserved but not parsed for fields in Phase 1.
 - Frontmatter must be the very first thing in the file (no leading whitespace or blank lines)
 - Nested YAML objects and arrays in frontmatter are not supported in Phase 1
 - All values are scalar (no lists or maps)
+
+## Phase 2 — Sections
+
+Phase 2 adds section parsing. Headings split the document into sections,
+and structured fields within sections become queryable.
+
+### Heading-delimited sections
+
+Headings (`#`, `##`, etc.) define section boundaries. Each section runs
+from one heading to the next heading of the same or higher level.
+
+```markdown
+## Triage
+- **importance:** high
+- **reason:** Critical bug in production
+
+## Lifecycle
+- **state:** ready-for-review
+- **flags:** tested, approved
+```
+
+### Structured fields in sections
+
+Lines matching `- **key:** value` inside a section are extracted as
+structured fields. These are queryable with dot notation:
+
+```bash
+markbase query prs --where "triage.importance=high"
+markbase query prs --select "pr,title,triage.importance,lifecycle.state"
+```
+
+### Freetext sections
+
+Sections declared with `"_type": "freetext"` in the schema store
+their entire content as a single text field. Any content that is not
+a `- **key:** value` field is captured as freetext.
+
+```markdown
+## Summary
+
+This PR adds retry logic with exponential backoff.
+It includes unit tests for all timeout scenarios.
+```
+
+The content above becomes queryable as the field `summary`:
+
+```bash
+markbase query prs --select "pr,title,summary"
+```
+
+### Mixed sections
+
+A section can have both structured fields and freetext content.
+Fields are extracted, and everything else becomes the section's
+freetext content.
