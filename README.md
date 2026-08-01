@@ -46,6 +46,12 @@ To run docs locally:
 npm run docs:dev
 ```
 
+## Uninstall
+
+```bash
+npm unlink -g markbase
+```
+
 ## Development
 
 ```bash
