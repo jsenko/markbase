@@ -30,6 +30,7 @@ export default defineConfig({
           text: 'Reference',
           items: [
             { text: 'CLI', link: '/reference/' },
+            { text: 'REST API', link: '/reference/api' },
             { text: 'Configuration', link: '/reference/configuration' },
             { text: 'Schema', link: '/reference/schema' },
           ],

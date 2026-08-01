@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: markbase API
+  description: REST API for the markbase markdown database server.
+  version: 0.1.0
+  license:
+    name: Apache-2.0
+
+servers:
+  - url: http://localhost:4824
+    description: Local development server
+
+paths:
+  /collections/{collection}/query:
+    get:
+      summary: Query a collection
+      description: >
+        Query records in a collection with optional filtering, field selection,
+        and sorting. Returns matching records as JSON.
+      operationId: queryCollection
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          description: Collection name as registered in markbase.config.json.
+          schema:
+            type: string
+          example: prs
+        - name: where
+          in: query
+          required: false
+          description: >
+            Filter expression. Supports `field=value`, `field!=value`,
+            and `AND` to combine conditions.
+          schema:
+            type: string
+          example: "author=alice AND draft=false"
+        - name: select
+          in: query
+          required: false
+          description: Comma-separated list of fields to include in the result.
+          schema:
+            type: string
+          example: "pr,title,author"
+        - name: sort
+          in: query
+          required: false
+          description: >
+            Sort expression in the format `field:direction` where direction
+            is `asc` or `desc`.
+          schema:
+            type: string
+          example: "created:desc"
+      responses:
+        "200":
+          description: Query results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResult"
+        "400":
+          description: Invalid filter expression or unknown field.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Collection not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collections/{collection}/records/{id}:
+    get:
+      summary: Get a record by ID
+      description: Fetch a single record by its collection name and record ID.
+      operationId: getRecord
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          description: Collection name.
+          schema:
+            type: string
+          example: prs
+        - name: id
+          in: path
+          required: true
+          description: Record ID (value of the key field, or file path).
+          schema:
+            type: string
+          example: "101"
+      responses:
+        "200":
+          description: The requested record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MdRecord"
+        "404":
+          description: Collection or record not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /reindex:
+    post:
+      summary: Rebuild the index
+      description: >
+        Re-scan all collection source files and rebuild the SQLite index
+        from scratch. Use after adding, removing, or modifying markdown files.
+      operationId: reindex
+      responses:
+        "200":
+          description: Reindex completed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        "500":
+          description: Reindex failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    QueryResult:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/MdRecord"
+        count:
+          type: integer
+          description: Number of matching records.
+
+    MdRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Record identifier (key field value or file path).
+        collectionName:
+          type: string
+          description: Name of the collection this record belongs to.
+        fields:
+          type: object
+          additionalProperties: true
+          description: >
+            Typed field values extracted from the markdown file.
+            Keys are field names from the schema; values are strings,
+            numbers, booleans, or null.
+        meta:
+          $ref: "#/components/schemas/FileMeta"
+
+    FileMeta:
+      type: object
+      properties:
+        filePath:
+          type: string
+          description: Absolute path to the source markdown file.
+        mtime:
+          type: number
+          description: File modification time in milliseconds.
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message.
