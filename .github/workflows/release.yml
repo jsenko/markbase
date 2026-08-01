@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+      - name: Create release archive
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TARBALL=$(npm pack --pack-destination .)
+          mkdir -p release-staging
+          cp "$TARBALL" release-staging/
+          cp README.md release-staging/
+          cp docs/guide/quickstart.md release-staging/QUICKSTART.md
+          cd release-staging
+          zip "../markbase-${VERSION}.zip" *
+          cd ..
+          echo "TARBALL=$TARBALL" >> "$GITHUB_ENV"
+          echo "ZIP=markbase-${VERSION}.zip" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            ${{ env.ZIP }}
+            ${{ env.TARBALL }}
+          body: |
+            ## Installation
+
+            Download `${{ env.ZIP }}` and extract it, or install the tarball directly:
+
+            ```bash
+            npm install -g ${{ env.TARBALL }}
+            ```
+
+            Then start the server and query your markdown files:
+
+            ```bash
+            markbase serve --config markbase.config.json
+            markbase query <collection> --where "field=value"
+            ```
+
+            See the included `QUICKSTART.md` for a full walkthrough.
