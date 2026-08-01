@@ -73,6 +73,20 @@ export async function startMcpServer(options: McpOptions): Promise<void> {
     },
   );
 
+  server.tool(
+    'markbase_status',
+    'Get server status: collection stats, record counts, and any validation errors in indexed files.',
+    {},
+    async () => {
+      try {
+        const result = await client.status();
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return errorResult(err);
+      }
+    },
+  );
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
